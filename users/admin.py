@@ -1,8 +1,13 @@
 from django.contrib import admin
 
-from users.models import User
+from users.models import User, Payment
 
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['pk', 'email']
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['pk', 'user', 'sum_payment', 'payment_method']
