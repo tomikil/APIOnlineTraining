@@ -21,10 +21,11 @@ class Course(models.Model):
 
 class Lesson(models.Model):
     title = models.CharField(max_length=150, verbose_name='наименование')
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='курс', **NULLABLE, related_name='lesson')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='курс',
+                               **NULLABLE, related_name='lesson')
     description = models.TextField(verbose_name='описание', **NULLABLE)
     preview = models.ImageField(upload_to='courses/lesson/image', verbose_name='картинка', **NULLABLE)
-    url_video = models.CharField(max_length=200, verbose_name='ссылка на видео', **NULLABLE)
+    url_video = models.CharField(max_length=400, verbose_name='ссылка на видео', **NULLABLE)
     owner = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.SET_NULL, **NULLABLE, verbose_name='владелец')
 
     class Meta:
@@ -33,3 +34,16 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.title}"
+
+
+class Subscription(models.Model):
+    user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='пользователь',
+                             related_name='subscription')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='курс', related_name='subscription')
+
+    def __str__(self):
+        return f"Подписка пользователя {self.user} на курс {self.course}"
+
+    class Meta:
+        verbose_name = 'подписка'
+        verbose_name_plural = 'подписки'
