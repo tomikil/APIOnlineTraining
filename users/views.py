@@ -4,6 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from users.models import User, Payment
 from users.serializers import UserSerializer, PaymentSerializer
+from users.services import create_price_stripe, create_session_stripe, create_product_stripe
 
 
 class UserCreateAPIView(generics.CreateAPIView):
@@ -47,3 +48,11 @@ class PaymentListAPIView(generics.ListAPIView):
 class PaymentCreateAPIView(generics.CreateAPIView):
     serializer_class = PaymentSerializer
     queryset = Payment.objects.all()
+
+    def perform_create(self, serializer):
+        payment = serializer.save(user=self.request.user)
+        price = create_price_stripe(payment.sum_payment)
+        session_id, payment_link = create_session_stripe(price)
+        payment.session_id = session_id
+        payment.payment_link = payment_link
+        payment.save()
