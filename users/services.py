@@ -11,12 +11,12 @@ def create_product_stripe(instance):
     return stripe_product.get('id')
 
 
-def create_price_stripe(payment_sum):
+def create_price_stripe(payment_sum, product):
     """Создание цены в stripe"""
     return stripe.Price.create(
         currency='rub',
         unit_amount=payment_sum * 100,
-        product_data={"name": 'Payment'}
+        product=product
     )
 
 
