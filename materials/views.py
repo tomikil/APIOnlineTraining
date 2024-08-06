@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from materials.models import Course, Lesson, Subscription
 from materials.paginators import MaterialPaginator
 from materials.serializers import CourseSerializer, LessonSerializer, CourseDetailSerializer, SubscriptionSerializer
+from materials.tasks import send_mail_update_course
 from users.permissions import IsOwner, IsModerator
 
 
@@ -32,6 +33,12 @@ class CourseViewSet(viewsets.ModelViewSet):
         elif self.action == 'destroy':
             self.permission_classes = (~IsModerator | IsOwner,)
         return super().get_permissions()
+
+    def perform_update(self, serializer):
+        serializer.save()
+        course = serializer.save()
+        course_id = course.id
+        send_mail_update_course.delay(course_id)
 
 
 class LessonCreateAPIView(generics.CreateAPIView):
