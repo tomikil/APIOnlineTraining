@@ -1,0 +1,78 @@
+version: '3'
+
+networks:
+  drf_network:
+    driver: bridge
+
+services:
+  redis:
+    image: redis:latest
+    restart: on-failure
+    networks:
+      - drf_network
+    expose:
+      - '6379'
+
+  db:
+    image: postgres
+    restart: on-failure
+    networks:
+      - drf_network
+    env_file:
+      - .env
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', '-c', 'pg_isready -U $POSTGRES_USER']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  app:
+    build: .
+    tty: true
+    networks:
+      - drf_network
+    ports:
+      - '80:8000'
+    env_file:
+      - .env
+    command: sh -c 'python manage.py migrate && python manage.py runserver 0.0.0.0:8000'
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+  celery:
+    build: .
+    tty: true
+    networks:
+      - drf_network
+    command: celery -A config worker -l INFO
+    restart: on-failure
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+      - app
+
+  celery_beat:
+    build: .
+    tty: true
+    networks:
+      - drf_network
+    command: celery -A config beat -l INFO
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+      - app
+
+volumes:
+  pg_data:
